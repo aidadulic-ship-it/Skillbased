@@ -1,3 +1,4 @@
+import { novaId, novaPair, novaText, metrics, options, reviewNova } from './nova.js';
 import { language, setLanguage, t, translateView } from './i18n.js';
 import { cases, domains, draft, modules, skills } from './content.js';
 import { challenges, evaluate, pages, recommend, resolve, restoreProgress } from './learning.js';
@@ -32,6 +33,8 @@ function escape(value) {
 }
 
 const lessonUrl = (module, lesson) => '#/learn/' + module.id + '/' + lesson.id;
+const n = key => escape(novaText(key, language));
+const pair = value => escape(novaPair(value, language));
 const challengeUrl = challenge => '#/challenge/' + challenge.id;
 const status = '<p class="status">' + draft + '</p>';
 const link = (url, label) => '<a href="' + url + '">' + escape(label) + '</a>';
@@ -40,17 +43,19 @@ const section = (title, content) => '<h2>' + title + '</h2>' + content;
 const list = items => '<ul>' + items.map(item => '<li>' + item + '</li>').join('') + '</ul>';
 
 function dashboard() {
-  const next = recommend(state);
+  const novaUrl = '#/challenge/' + novaId;
+  const hasReviewedNova = state.evidence.some(record =>
+    record.challengeId === novaId && record.feedback.rubricVersion === 'NOVA 2.0');
+  const next = hasReviewedNova ? recommend(state) :
+    { url: novaUrl, title: n('title'), reason: n('recommend') };
   const lessonCount = modules.reduce((total, module) => total + module.lessons.length, 0);
-  const started = state.read.length || state.evidence.length;
-  const featured = modules[0].challenges[1];
   const heroImage = new URL('./executive.webp', import.meta.url).href;
   return `<section class="hero" aria-labelledby="masterclass-title">
     <div class="hero-copy">
       <p class="eyebrow">Executive Masterclass</p>
-      <h1 id="masterclass-title">Rethink work. <em>Start with skills.</em></h1>
-      <p class="intro">Make the call on how work is staffed, how skills are built and where a skills-first approach earns its place.</p>
-      <div class="actions">${action(next.url, started ? 'Resume masterclass' : 'Begin masterclass')}
+      <h1 id="masterclass-title">${n('promise')}</h1>
+      <p class="intro">${n('audience')}</p>
+      <div class="actions">${action(next.url, hasReviewedNova ? 'Resume masterclass' : novaText('start', language))}
         ${link('#/learn', 'Explore the programme')}</div>
     </div>
     <figure class="hero-visual"><img src="${heroImage}" alt="" width="1056" height="1024" fetchpriority="high"><figcaption>Case setting <strong>Advanced manufacturing</strong></figcaption></figure>
@@ -63,8 +68,8 @@ function dashboard() {
   </section>
   <section class="featured-case" aria-labelledby="featured-title">
     <div class="featured-copy"><p class="eyebrow">From the Skills Lab</p><h2 id="featured-title">Your night shift is losing time. What would you investigate first?</h2>
-    <p>Leadership wants a skills taxonomy. You have to find out whether the bottleneck is skill coverage, spare parts or something else.</p>${action(challengeUrl(featured), 'Open the case')}</div>
-    <dl class="case-briefing"><div><dt>Organization</dt><dd>NOVA Manufacturing</dd></div><div><dt>Setting</dt><dd>Fictional, two sites</dd></div><div><dt>Assignment</dt><dd>Diagnosis and a bounded next step</dd></div><div><dt>Time</dt><dd>${featured.minutes} ${t('minutes')}</dd></div></dl>
+    <p>Leadership wants a skills taxonomy. You have to find out whether the bottleneck is skill coverage, spare parts or something else.</p>${action(novaUrl, 'Open the case')}</div>
+    <dl class="case-briefing"><div><dt>Organization</dt><dd>NOVA Manufacturing</dd></div><div><dt>Setting</dt><dd>Fictional, two sites</dd></div><div><dt>Assignment</dt><dd>Diagnosis and a bounded next step</dd></div><div><dt>Time</dt><dd>25 ${t('minutes')}</dd></div></dl>
   </section>
   <section class="dashboard-section" aria-labelledby="explore">
     <h2 id="explore">The programme at a glance</h2>
@@ -138,7 +143,37 @@ function lessonPage(module, lesson) {
     <p id="notice" role="status"></p></article><aside class="lesson-outline" aria-labelledby="outline-title"><h2 id="outline-title">In this module</h2><ol>${outline}</ol></aside></div>`;
 }
 
+function novaPage(challenge) {
+  const previous = state.evidence.find(record => record.challengeId === novaId);
+  const prep = modules[0].lessons.slice(2);
+  return `<article class="challenge-page"><header class="page-heading">
+    ${link('#/lab', 'Skills Lab')}<p class="eyebrow">NOVA Manufacturing · 25 ${t('min')}</p>
+    <h1>${n('title')}</h1></header>
+    <div class="nova-layout">
+      <section class="case-brief" aria-labelledby="nova-brief">
+        <h2 id="nova-brief">${n('brief')}</h2><p>${n('situation')}</p>
+        <table class="nova-data"><caption>${n('evidence')}</caption>
+          <thead><tr><th scope="col">${n('metric')}</th><th scope="col">${n('day')}</th><th scope="col">${n('night')}</th></tr></thead>
+          <tbody>${metrics.map(([label, day, night]) => `<tr><th scope="row">${pair(label)}</th><td>${day}</td><td>${night}</td></tr>`).join('')}</tbody>
+        </table><p>${n('limitation')}</p>
+        <h3>${n('options')}</h3><ul class="nova-options">${options.map(option => `<li><strong>${pair(option.title)}</strong><span>${option.cost}</span></li>`).join('')}</ul>
+        <details><summary>${n('learning')}</summary>${list(prep.map(lesson => link(lessonUrl(modules[0], lesson), lesson.title)))}</details>
+      </section>
+      <div class="practice-workspace">
+        <form id="practice">
+          <h2>${n('memo')}</h2><p>${n('instruction')}</p>
+          <label class="control">${n('select')}<select name="decision" required><option value="">${n('selectEmpty')}</option>
+            ${options.map(option => `<option value="${option.id}"${previous?.optionId === option.id ? ' selected' : ''}>${pair(option.title)}</option>`).join('')}</select></label>
+          <label class="control">${n('memo')}<textarea name="work" rows="10" maxlength="12000" required>${escape(state.drafts[challenge.id] ?? previous?.work)}</textarea></label>
+          <p class="meta">${n('draft')}</p><button>${n('review')}</button>
+        </form>
+        <section id="feedback" tabindex="-1" aria-label="Formative feedback"></section><p id="notice" role="status"></p>
+      </div>
+    </div></article>`;
+}
+
 function challengePage(challenge) {
+  if (challenge.id === novaId) return novaPage(challenge);
   const module = modules.find(item => item.id === challenge.moduleId);
   const previous = state.evidence.find(item => item.challengeId === challenge.id);
   const earlier = state.evidence.find(item => {
@@ -168,6 +203,10 @@ function challengePage(challenge) {
 }
 
 function feedbackBody(feedback) {
+  if (feedback.rubricVersion === 'NOVA 2.0') {
+    return '<p>' + n('how') + '</p>' + list(feedback.criteria.map(item =>
+      '<strong>' + escape(item.label) + '</strong> ' + escape(item.feedback)));
+  }
   return `<p><strong>Learning evidence confidence</strong> ${escape(feedback.confidence)}</p>
     ${list(feedback.criteria.map(item => '<strong>' + escape(item.label) + '</strong> ' + escape(item.feedback)))}
     <p class="muted">${t('Rubric v')}${escape(feedback.rubricVersion)} · ${t('The result covers this practice exercise. Workplace competence and certification require separate assessment.')}</p>`;
@@ -178,11 +217,14 @@ function portfolio() {
     ${state.evidence.length ? state.evidence.map(record => {
       const challenge = challenges.find(item => item.id === record.challengeId);
       if (!challenge) return '';
-      return `<article class="card record"><h2>${link(challengeUrl(challenge), challenge.title)}</h2>
+      const option = challenge.id === novaId ? options.find(item => item.id === record.optionId) : undefined;
+      const title = option ? novaText('title', language) : challenge.title;
+      return `<article class="card record"><h2>${link(challengeUrl(challenge), title)}</h2>
+        ${option ? '<p>' + pair(option.title) + '</p>' : ''}
         <p class="meta">${escape(new Date(record.at).toLocaleDateString(language === 'de' ? 'de-AT' : 'en-GB'))} · ${escape(record.feedback.confidence)}</p>
         <details><summary>View response and feedback</summary><p class="work">${escape(record.work)}</p>${feedbackBody(record.feedback)}</details>
         <p>${link(challengeUrl(challenge), 'Revisit and reassess for 0 credits')}</p></article>`;
-    }).join('') : '<p>No saved evidence yet.</p>' + action('#/challenge/00-1', 'Try the first challenge')}
+    }).join('') : '<p>No saved evidence yet.</p>' + action('#/challenge/' + novaId, novaText('start', language))}
     <p class="muted">You can revisit and reassess a practice decision. Formal appeals and human review require an approved service and review owner.</p>`;
 }
 
@@ -197,7 +239,7 @@ function skillPage() {
 function lab() {
   return `<h1>Skills Lab</h1><p>Choose a business decision, write your response and compare your reasoning with the review criteria.</p>
     ${status}<div class="lab-index">${modules.map(module => `<section class="lab-topic"><h2>${escape(module.title)}</h2>
-      ${list(module.challenges.map(challenge => link(challengeUrl(challenge), challenge.title)))}</section>`).join('')}</div>`;
+      ${list(module.challenges.map(challenge => link(challengeUrl(challenge), challenge.id === novaId ? novaText('title', language) : challenge.title)))}</section>`).join('')}</div>`;
 }
 
 function sources() {
@@ -241,20 +283,26 @@ function bindPractice(challenge) {
     event.preventDefault();
     const data = new FormData(form);
     const work = String(data.get('work')).trim();
+    const executive = challenge.id === novaId;
     if (!work) {
-      notice.textContent = t('Enter a response before requesting feedback.');
+      notice.textContent = executive ? novaText('invalid', language) : t('Enter a response before requesting feedback.');
       form.elements.work.focus();
       return;
     }
+    const optionId = data.get('decision');
+    const feedback = executive ? reviewNova(optionId, work) :
+      evaluate(challenge, challenge.rubric.criteria.map((_, index) => Number(data.get('c' + index))));
+    if (!feedback) return;
     pending = {
       challengeId: challenge.id,
       skillIds: challenge.skillIds,
       at: new Date().toISOString(),
       work,
-      feedback: evaluate(challenge, challenge.rubric.criteria.map((_, index) => Number(data.get('c' + index)))),
+      feedback,
+      ...(executive ? { optionId } : {}),
     };
-    output.innerHTML = '<h2>Formative feedback</h2>' + feedbackBody(pending.feedback) +
-      '<div class="actions"><button id="save" type="button">Save evidence</button>' + link('#/portfolio', 'View portfolio') + '</div>';
+    output.innerHTML = '<h2>' + (executive ? n('feedback') : 'Formative feedback') + '</h2>' + feedbackBody(pending.feedback) +
+      '<div class="actions"><button id="save" type="button">' + (executive ? n('save') : 'Save evidence') + '</button>' + link('#/portfolio', 'View portfolio') + '</div>';
     translateView(output);
     notice.textContent = '';
     output.focus();
@@ -263,7 +311,7 @@ function bindPractice(challenge) {
       state.evidence.unshift(pending);
       delete state.drafts[challenge.id];
       pending = undefined;
-      notice.textContent = persist() ? t('Evidence saved to your portfolio.') : t(storageMessage);
+      notice.textContent = persist() ? (executive ? novaText('saved', language) : t('Evidence saved to your portfolio.')) : t(storageMessage);
       document.querySelector('#save').disabled = true;
       output.focus();
     };
@@ -316,7 +364,7 @@ function render(moveFocus = false) {
   };
   main.innerHTML = (storageMessage ? '<p role="status">' + escape(storageMessage) + '</p>' : '') + views[page]();
   translateView(main);
-  document.title = t(lesson?.title ?? challenge?.title ?? module?.title ?? pages[page] ?? 'Page unavailable') + ' · Skills-Based Organization Academy';
+  document.title = (challenge?.id === novaId ? novaText('title', language) : t(lesson?.title ?? challenge?.title ?? module?.title ?? pages[page] ?? 'Page unavailable')) + ' · Skills-Based Organization Academy';
   if (page === 'learn') {
     document.querySelector('#search').oninput = updateCatalog;
     document.querySelector('#domain').onchange = updateCatalog;
@@ -352,6 +400,7 @@ switcher.addEventListener('change', () => {
   const search = document.querySelector('#search')?.value;
   const domain = document.querySelector('#domain')?.value;
   const checked = [...main.querySelectorAll('input[type="radio"]:checked')].map(input => [input.name, input.value]);
+  const decision = main.querySelector('select[name="decision"]')?.value;
   const scroll = window.scrollY;
   setLanguage(switcher.value);
   render();
@@ -360,6 +409,7 @@ switcher.addEventListener('change', () => {
     document.querySelector('#domain').value = domain;
     updateCatalog();
   }
+  if (decision !== undefined) main.querySelector('select[name="decision"]').value = decision;
   for (const [name, value] of checked) {
     main.querySelector(`input[name="${name}"][value="${value}"]`).checked = true;
   }

@@ -118,3 +118,17 @@ test('German catalogue covers the complete curriculum and formative feedback', a
     }
   }
 });
+
+test('NOVA reviews the selected tradeoff and checks the memo for traceable case figures', async () => {
+  const { reviewNova, options, novaId, translateNova } = await import('../site/nova.js');
+  assert.equal(resolve('#/challenge/' + novaId).challenge.id, novaId);
+  assert.equal(reviewNova('unknown', ''), null);
+  const memo = 'Repair medians are 46 and 91 min. Parts waits are 12 and 47 min.';
+  for (const option of options) {
+    const review = reviewNova(option.id, memo);
+    assert.equal(review.criteria[0].feedback, option.review[0]);
+    assert.match(review.criteria[1].feedback, /at least two/);
+    assert.ok(review.criteria.every(item => translateNova(item.label) && translateNova(item.feedback)));
+  }
+  assert.match(reviewNova('pilot', 'Limited evidence.').criteria[1].feedback, /fewer than two/);
+});

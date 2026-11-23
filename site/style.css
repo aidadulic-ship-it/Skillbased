@@ -181,3 +181,14 @@ dialog::backdrop { background: #151527aa; }
 @media (max-width: 36rem) {
   .header-controls { flex-direction: column; align-items: flex-start; }
 }
+
+.nova-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:1rem; align-items:start; }
+.nova-data { width:100%; border-collapse:collapse; text-align:left; font-size:.9rem; }
+.nova-data caption { text-align:left; font-weight:700; margin-bottom:.5rem; }
+.nova-data th,.nova-data td { padding:.45rem .35rem; border-bottom:1px solid #f6badb50; overflow-wrap:anywhere; }
+.nova-data td { font-variant-numeric:tabular-nums; }
+.nova-options { padding-inline-start:1.2rem; }
+.nova-options li { margin-bottom:.45rem; }
+.nova-options span { display:block; color:#dfd2de; }
+.nova-layout .control + .control { margin-top:1rem; }
+@media (max-width:50rem) { .nova-layout { grid-template-columns:minmax(0,1fr); } }

@@ -1,3 +1,4 @@
+import { translateNova } from './nova.js';
 import { germanContent } from './de-content.js';
 
 const germanUI = {
@@ -172,7 +173,7 @@ export function t(text) {
   if (language !== 'de' || typeof text !== 'string') return text;
   if (Object.hasOwn(germanUI, text)) return germanUI[text];
   if (Object.hasOwn(germanContent, text)) return germanContent[text];
-  return text;
+  return translateNova(text) ?? text;
 }
 
 // Localize static template text before interaction handlers are attached.
