@@ -78,6 +78,14 @@ function modulePage(module) {
     ${section('Challenges', list(module.challenges.map(challenge => link(challengeUrl(challenge), challenge.title) + ' · 12 min')))}</article>`;
 }
 
+function lessonSources(notes) {
+  if (!notes.length) return '';
+  return section('Evidence and interpretation', list(notes.map(note => `
+    <p>${escape(note.claim)}</p><p>${escape(note.limitation)}</p>
+    <p>${link(escape(note.url), note.title)} · ${escape(note.publisher)} · ${escape(note.location)}</p>
+    <p class="meta">${escape(note.evidenceType)} · ${escape(note.reviewStatus)} ${escape(note.reviewedAt)}${note.publicationDate ? ' · Published ' + escape(note.publicationDate) : ''}</p>`)));
+}
+
 function lessonPage(module, lesson) {
   const next = module.lessons[Number(lesson.id)];
   const done = state.read.includes(module.id + '/' + lesson.id);
@@ -85,6 +93,7 @@ function lessonPage(module, lesson) {
     <h1>${escape(lesson.title)}</h1>${status}<p>${escape(lesson.body)}</p>
     ${section('Example', '<p>' + escape(lesson.example) + '</p>')}
     ${section('Limitation', '<p>' + escape(lesson.limit) + '</p>')}
+    ${lessonSources(lesson.sourceClaims)}
     ${section('Knowledge check', '<p>' + escape(lesson.check) + '</p><details><summary>Show suggested answer</summary><p>' + escape(lesson.answer) + '</p></details>')}
     <div class="actions"><button type="button" id="complete" aria-pressed="${done}">${done ? 'Lesson complete' : 'Mark lesson complete'}</button>
     ${next ? link(lessonUrl(module, next), 'Next lesson') : link(challengeUrl(module.challenges[0]), 'Start module practice')}</div>
@@ -151,7 +160,10 @@ function lab() {
 }
 
 function sources() {
-  return `<article><h1>Sources</h1>${status}<p>The lessons are original teaching drafts for editorial review. No real-company claims or independently verified sources are published in this preview.</p>
+  return `<article><h1>Sources</h1>${status}<p>Lessons are editorial drafts. Some include checked source notes with a direct link, the claim it supports and the limits of that evidence.</p>
+    ${section('Lessons with checked sources', list(modules.flatMap(module => module.lessons
+      .filter(lesson => lesson.sourceClaims.length)
+      .map(lesson => link(lessonUrl(module, lesson), lesson.title)))))}
     ${section('Fictional cases', list(Object.values(cases).map(escape)))}
     ${section('Review process', '<p>A proposed source must be checked, editorially reviewed and approved before publication. Register the claim, publisher, URL, publication and review dates, evidence type, limitations and approval owner.</p>')}</article>`;
 }

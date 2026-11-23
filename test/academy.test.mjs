@@ -83,3 +83,17 @@ test('saved state retains older records and recovers from malformed entries', ()
   assert.deepEqual(restoreProgress(previous), { read: ['00/1'], evidence: [record] });
   assert.deepEqual(restoreProgress({ evidence: [record] }), { read: [], evidence: [record] });
 });
+
+test('foundations source notes identify evidence, limits and review status', () => {
+  const notes = modules.flatMap(module => module.lessons.flatMap(lesson => lesson.sourceClaims));
+  assert.equal(new Set(notes.map(note => note.id)).size, notes.length);
+  for (const lesson of modules[0].lessons) {
+    assert.ok(lesson.sourceClaims.length, lesson.title);
+    for (const note of lesson.sourceClaims) {
+      assert.equal(new URL(note.url).protocol, 'https:');
+      assert.equal(note.reviewStatus, 'Source checked');
+      assert.ok(note.publisher && note.claim && note.limitation && note.reviewedAt);
+    }
+    assert.equal(lesson.status, draft);
+  }
+});

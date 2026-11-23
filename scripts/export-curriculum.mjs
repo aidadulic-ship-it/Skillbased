@@ -27,6 +27,7 @@ for (const module of modules) {
     ...module.lessons.flatMap(lesson => [
       `### ${lesson.title}`, lesson.body,
       `**Example** — ${lesson.example}`, `**Limitation** — ${lesson.limit}`,
+      ...lesson.sourceClaims.map(note => `**${note.reviewStatus} · ${note.reviewedAt}** — ${note.claim} ${note.limitation} [${note.title}](${note.url}) · ${note.publisher} · ${note.location} · ${note.evidenceType}${note.publicationDate ? ' · Published ' + note.publicationDate : ''}`),
       `**Knowledge check** — ${lesson.check}`,
       `<details>\n<summary>Suggested answer</summary>\n\n${lesson.answer}\n\n</details>`,
     ]),

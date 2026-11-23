@@ -1,4 +1,5 @@
 import { curriculum } from './curriculum.js';
+import { sourcesByLesson } from './sources.js';
 
 export const draft = 'Editorial draft — source verification pending';
 export const domains = [
@@ -42,9 +43,10 @@ export const modules = curriculum.map(([title, outcome, lessons, challenges], in
     id, title, outcome, domain: skill?.domain ?? 'Foundations', skillIds: skill ? [skill.id] : [],
     minutes: lessons.length * 5 + challenges.length * 12,
     audience: 'HR, L&D, workforce planners and leaders', prerequisites: index ? ['00'] : [],
-    status: draft, version: 1, references: [],
+    status: draft, version: 1,
     lessons: lessons.map(([title, body, example, limit, check, answer], position) => ({
       id: String(position + 1), title, body, example, limit, check, answer, status: draft, minutes: 5,
+      sourceClaims: sourcesByLesson[id + '/' + (position + 1)] ?? [],
     })),
     challenges: challenges.map(([title, prompt, deliverable, hint, supported, weak], position) => ({
       id: id + '-' + (position + 1), moduleId: id, title, prompt, deliverable, hint,
