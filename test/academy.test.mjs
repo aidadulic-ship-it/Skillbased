@@ -78,10 +78,11 @@ test('saved state retains older records and recovers from malformed entries', ()
   };
   const previous = {
     read: ['00/1', '00/1', 'missing/1', null],
+    drafts: { '00-1': '', '00-2': 'Draft memo', '00-3': false, '99-1': 'Obsolete' },
     evidence: [null, { ...record, feedback: {} }, record],
   };
-  assert.deepEqual(restoreProgress(previous), { read: ['00/1'], evidence: [record] });
-  assert.deepEqual(restoreProgress({ evidence: [record] }), { read: [], evidence: [record] });
+  assert.deepEqual(restoreProgress(previous), { read: ['00/1'], evidence: [record], drafts: { '00-1': '', '00-2': 'Draft memo' } });
+  assert.deepEqual(restoreProgress({ evidence: [record] }), { read: [], evidence: [record], drafts: {} });
 });
 
 test('foundations source notes identify evidence, limits and review status', () => {

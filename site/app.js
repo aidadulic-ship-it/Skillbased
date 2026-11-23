@@ -2,7 +2,7 @@ import { cases, domains, draft, modules, skills } from './content.js';
 import { challenges, evaluate, pages, recommend, resolve, restoreProgress } from './learning.js';
 
 const key = 'sbo-academy-v1';
-const empty = () => ({ read: [], evidence: [] });
+const empty = () => restoreProgress(null);
 const main = document.querySelector('main');
 const nav = document.querySelector('nav');
 let storageMessage = '';
@@ -151,7 +151,8 @@ function challengePage(challenge) {
       <p>${link('#/challenge/' + earlier.challengeId, earlierTitle)}</p><p class="work">${escape(earlier.work)}</p></details>` : ''}
     </section><div class="practice-workspace"><form id="practice">
       <h2>Decision memo</h2>
-      <label class="control">Write your response using fictional data only<textarea name="work" rows="7" maxlength="12000" required>${escape(previous?.work)}</textarea></label>
+      <label class="control">Write your response using fictional data only<textarea name="work" rows="7" maxlength="12000" required>${escape(state.drafts[challenge.id] ?? previous?.work)}</textarea></label>
+      <p class="meta">Your memo draft is stored in this browser as you type.</p>
       <h2>Check your reasoning</h2><p>The rubric checks the choices below. Review the written response yourself using the feedback.</p>
       ${challenge.rubric.criteria.map((criterion, index) => {
         const order = (Number(challenge.id.slice(-1)) + index) % 2 ? [1, 0] : [0, 1];
@@ -206,10 +207,10 @@ function sources() {
 }
 
 function profile() {
-  return `<article><h1>Profile</h1><p>The academy uses browser storage for reading progress and practice evidence. It creates no account and sends no learning data to a service. Use fictional inputs only.</p>
+  return `<article><h1>Profile</h1><p>The academy uses browser storage for reading progress, memo drafts and practice evidence. It creates no account and sends no learning data to a service. Use fictional inputs only.</p>
   <div class="actions"><button id="export" type="button">Export local data</button><button id="clear" class="secondary" type="button">Delete local data</button></div>
   <dialog id="confirm" aria-labelledby="delete-title"><h2 id="delete-title">Delete local data?</h2>
-    <p>This removes reading progress and evidence saved in this browser.</p><form method="dialog" class="actions">
+    <p>This removes reading progress, memo drafts and evidence saved in this browser.</p><form method="dialog" class="actions">
     <button class="secondary" value="cancel" autofocus>Cancel</button><button value="delete">Delete data</button></form></dialog>
   <p id="notice" role="status"></p></article>`;
 }
@@ -219,7 +220,14 @@ function bindPractice(challenge) {
   const output = document.querySelector('#feedback');
   const notice = document.querySelector('#notice');
   let pending;
-  form.oninput = () => {
+  form.oninput = event => {
+    if (event.target === form.elements.work) {
+      const work = form.elements.work.value;
+      if (state.drafts[challenge.id] !== work) {
+        state.drafts[challenge.id] = work;
+        if (!persist()) notice.textContent = storageMessage;
+      }
+    }
     if (pending) {
       pending = undefined;
       output.innerHTML = '';
@@ -249,6 +257,7 @@ function bindPractice(challenge) {
     document.querySelector('#save').onclick = () => {
       if (!pending) return;
       state.evidence.unshift(pending);
+      delete state.drafts[challenge.id];
       pending = undefined;
       notice.textContent = persist() ? 'Evidence saved to your portfolio.' : storageMessage;
       document.querySelector('#save').disabled = true;

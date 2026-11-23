@@ -26,7 +26,12 @@ export function resolve(hash) {
 export function restoreProgress(value) {
   const read = Array.isArray(value?.read) ? value.read : [];
   const evidence = Array.isArray(value?.evidence) ? value.evidence : [];
+  const drafts = Object.fromEntries(challenges.flatMap(challenge => {
+    const work = value?.drafts?.[challenge.id];
+    return typeof work === 'string' && work.length <= 12000 ? [[challenge.id, work]] : [];
+  }));
   return {
+    drafts,
     read: [...new Set(read.filter(id => typeof id === 'string' && resolve('#/learn/' + id).page === 'lesson'))],
     evidence: evidence.filter(record => {
       const feedback = record?.feedback;
