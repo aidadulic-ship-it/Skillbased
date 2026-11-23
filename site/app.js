@@ -41,40 +41,44 @@ function dashboard() {
   const next = recommend(state);
   const lessonCount = modules.reduce((total, module) => total + module.lessons.length, 0);
   const started = state.read.length || state.evidence.length;
-  return `<section class="hero">
-    <div class="hero-copy"><p class="eyebrow">The Skills-Based Organization</p>
-      <h1>Make better decisions about skills and work</h1>
-      <p class="intro">Practise skills-based decisions in realistic fictional organizations. Build a portfolio of your reasoning as you learn.</p>
-      <div class="actions">${action(next.url, started ? 'Continue learning' : 'Start learning')}
-        ${link('#/learn', 'Browse all modules')}</div>
+  const featured = modules[0].challenges[1];
+  const heroImage = new URL('./executive.webp', import.meta.url).href;
+  return `<section class="hero" aria-labelledby="masterclass-title">
+    <div class="hero-copy">
+      <p class="eyebrow">Executive Masterclass</p>
+      <h1 id="masterclass-title">Rethink work. <em>Start with skills.</em></h1>
+      <p class="intro">Make the call on how work is staffed, how skills are built and where a skills-first approach earns its place.</p>
+      <div class="actions">${action(next.url, started ? 'Resume masterclass' : 'Begin masterclass')}
+        ${link('#/learn', 'Explore the programme')}</div>
     </div>
-    <section class="progress-panel" aria-labelledby="progress-title">
-      <h2 id="progress-title">Your learning progress</h2>
-      <div class="progress-count" aria-hidden="true"><strong>${state.read.length}</strong><span>/ ${lessonCount}</span></div>
-      <p id="progress-label">${state.read.length} of ${lessonCount} lessons complete</p>
-      <progress aria-labelledby="progress-label" value="${state.read.length}" max="${lessonCount}"></progress>
-      <div class="progress-evidence"><span>${state.evidence.length} saved practice records</span>${link('#/portfolio', 'Portfolio')}</div>
-    </section>
+    <figure class="hero-visual"><img src="${heroImage}" alt="" width="1056" height="1024" fetchpriority="high"><figcaption>Case setting <strong>Advanced manufacturing</strong></figcaption></figure>
   </section>
-  <section class="dashboard-section" aria-labelledby="next-step">
-    <h2 id="next-step">Your next step</h2>
-    <article class="next-step"><div><h3>${link(next.url, next.title)}</h3><p>${escape(next.reason)}</p></div></article>
+  <section class="learning-desk" aria-label="Your learning">
+    <div class="desk-cell"><p class="eyebrow">Up next</p><h2>${link(next.url, next.title)}</h2><p>${escape(next.reason)}</p></div>
+    <div class="desk-cell"><p class="eyebrow">Reading progress</p><p id="progress-label"><strong>${state.read.length}</strong> / ${lessonCount} lessons complete</p>
+      <progress aria-labelledby="progress-label" value="${state.read.length}" max="${lessonCount}"></progress></div>
+    <div class="desk-cell"><p class="eyebrow">Decision portfolio</p><p><strong>${state.evidence.length}</strong> saved practice record${state.evidence.length === 1 ? '' : 's'}</p>${link('#/portfolio', 'Open portfolio')}</div>
+  </section>
+  <section class="featured-case" aria-labelledby="featured-title">
+    <div class="featured-copy"><p class="eyebrow">From the Skills Lab</p><h2 id="featured-title">Your night shift is losing time. What would you investigate first?</h2>
+    <p>Leadership wants a skills taxonomy. You have to find out whether the bottleneck is skill coverage, spare parts or something else.</p>${action(challengeUrl(featured), 'Open the case')}</div>
+    <dl class="case-briefing"><div><dt>Organization</dt><dd>NOVA Manufacturing</dd></div><div><dt>Setting</dt><dd>Fictional, two sites</dd></div><div><dt>Assignment</dt><dd>Diagnosis and a bounded next step</dd></div><div><dt>Time</dt><dd>${featured.minutes} minutes</dd></div></dl>
   </section>
   <section class="dashboard-section" aria-labelledby="explore">
-    <h2 id="explore">Explore the academy</h2>
-    <div class="grid">
-      <article class="card pathway"><h3>${link('#/learn', 'Learn')}</h3><p>Follow the foundations or choose a topic relevant to your work.</p><p class="meta">${modules.length} modules · ${lessonCount} lessons</p></article>
-      <article class="card pathway"><h3>${link('#/skills', 'Skills')}</h3><p>See how each skill is defined and what counts as practice evidence.</p><p class="meta">${skills.length} skills · ${domains.length} domains</p></article>
-      <article class="card pathway"><h3>${link('#/lab', 'Skills Lab')}</h3><p>Make a decision in a fictional case and get formative feedback.</p><p class="meta">${challenges.length} practice challenges</p></article>
+    <h2 id="explore">The programme at a glance</h2>
+    <div class="grid pathways">
+      <article class="pathway"><h3>${link('#/learn', 'Study the programme')}</h3><p>${modules.length} modules · ${lessonCount} lessons</p></article>
+      <article class="pathway"><h3>${link('#/skills', 'Explore the skills')}</h3><p>${skills.length} skills · ${domains.length} domains</p></article>
+      <article class="pathway"><h3>${link('#/lab', 'Enter the Skills Lab')}</h3><p>${challenges.length} practice challenges</p></article>
     </div>
   </section>`;
 }
 
 function catalog() {
-  return `<div class="page-heading"><h1>Learn</h1><p class="intro">Start with foundations or choose a domain to suit your work.</p>${status}</div>
+  return `<div class="page-heading"><p class="eyebrow">Executive Masterclass</p><h1>The programme</h1><p class="intro">Start with foundations or find the module that fits the decision you are working on.</p>${status}</div>
     <div class="filters"><label class="control">Search modules<input id="search" type="search"></label>
     <label class="control">Domain<select id="domain"><option value="">All domains</option>${['Foundations', ...domains].map(domain => '<option>' + escape(domain) + '</option>').join('')}</select></label></div>
-    <p role="status" id="results"></p><div class="grid catalog-grid" id="catalog"></div>`;
+    <p role="status" id="results"></p><div class="catalog-grid" id="catalog"></div>`;
 }
 
 function updateCatalog() {
@@ -85,9 +89,9 @@ function updateCatalog() {
   document.querySelector('#results').textContent = shown.length ? shown.length + (shown.length === 1 ? ' module' : ' modules') : 'No modules match your filters.';
   document.querySelector('#catalog').innerHTML = shown.map(item => {
     const completed = item.lessons.filter(lesson => state.read.includes(item.id + '/' + lesson.id)).length;
-    return `<article class="card module-card">
+    return `<article class="module-card">
       <p class="eyebrow">${escape(item.domain)}</p>
-      <h2>${link('#/learn/' + item.id, item.title)}</h2><p>${escape(item.outcome)}</p>
+      <div><h2>${link('#/learn/' + item.id, item.title)}</h2><p>${escape(item.outcome)}</p></div>
       <div class="module-meta"><p class="meta">${item.lessons.length} lessons · ${item.challenges.length} challenges · ${item.minutes} min</p>
       ${completed ? `<p class="completion">${completed}/${item.lessons.length} lessons complete</p>` : ''}</div></article>`;
   }).join('');
@@ -119,7 +123,8 @@ function lessonSources(notes) {
 function lessonPage(module, lesson) {
   const next = module.lessons[Number(lesson.id)];
   const done = state.read.includes(module.id + '/' + lesson.id);
-  return `<article class="reading-page"><header class="page-heading">${link('#/learn/' + module.id, module.title)}<p class="eyebrow">Lesson ${lesson.id} · 5 min</p>
+  const outline = module.lessons.map(item => `<li><a href="${lessonUrl(module, item)}"${item === lesson ? ' aria-current="page"' : ''}>${escape(item.title)}</a></li>`).join('');
+  return `<div class="reading-layout"><article class="reading-page"><header class="page-heading">${link('#/learn/' + module.id, module.title)}<p class="eyebrow">Lesson ${lesson.id} · 5 min</p>
     <h1>${escape(lesson.title)}</h1>${status}</header><p class="lesson-lead">${escape(lesson.body)}</p>
     <section class="lesson-example"><h2>Example</h2><p>${escape(lesson.example)}</p></section>
     ${section('Limitation', '<p>' + escape(lesson.limit) + '</p>')}
@@ -127,7 +132,7 @@ function lessonPage(module, lesson) {
     ${section('Knowledge check', '<p>' + escape(lesson.check) + '</p><details><summary>Show suggested answer</summary><p>' + escape(lesson.answer) + '</p></details>')}
     <div class="actions lesson-actions"><button type="button" id="complete" aria-pressed="${done}">${done ? 'Lesson complete' : 'Mark lesson complete'}</button>
     ${next ? link(lessonUrl(module, next), 'Next lesson') : link(challengeUrl(module.challenges[0]), 'Start module practice')}</div>
-    <p id="notice" role="status"></p></article>`;
+    <p id="notice" role="status"></p></article><aside class="lesson-outline" aria-labelledby="outline-title"><h2 id="outline-title">In this module</h2><ol>${outline}</ol></aside></div>`;
 }
 
 function challengePage(challenge) {
@@ -138,14 +143,14 @@ function challengePage(challenge) {
     return saved?.scenarioId === challenge.scenarioId && saved.id < challenge.id;
   });
   const earlierTitle = challenges.find(item => item.id === earlier?.challengeId)?.title;
-  return `<article class="challenge-page"><header class="page-heading">${link('#/learn/' + module.id, module.title)}<p class="eyebrow">Practice challenge · 12 min · 0 credits</p>
+  return `<article class="challenge-page"><header class="page-heading">${link('#/learn/' + module.id, module.title)}<p class="eyebrow">Decision exercise · 12 min · 0 credits</p>
     <h1>${escape(challenge.title)}</h1>${status}</header><div class="challenge-layout"><section class="case-brief" aria-labelledby="case-title"><h2 id="case-title">Case brief</h2><p class="muted">${escape(cases[challenge.scenarioId])}</p>
-    <p>${escape(challenge.prompt)}</p><p><strong>Work product</strong> ${escape(challenge.deliverable)}</p>
+    <p>${escape(challenge.prompt)}</p><div class="case-assignment"><h3>What to deliver</h3><p>${escape(challenge.deliverable)}</p></div>
     <details><summary>Show a hint</summary><p>${escape(challenge.hint)}</p></details>
     ${earlier ? `<details><summary>Review earlier practice for this case</summary>
       <p>${link('#/challenge/' + earlier.challengeId, earlierTitle)}</p><p class="work">${escape(earlier.work)}</p></details>` : ''}
     </section><div class="practice-workspace"><form id="practice">
-      <h2>Your response</h2>
+      <h2>Decision memo</h2>
       <label class="control">Write your response using fictional data only<textarea name="work" rows="7" maxlength="12000" required>${escape(previous?.work)}</textarea></label>
       <h2>Check your reasoning</h2><p>The rubric checks the choices below. Review the written response yourself using the feedback.</p>
       ${challenge.rubric.criteria.map((criterion, index) => {
@@ -174,7 +179,7 @@ function portfolio() {
         <details><summary>View response and feedback</summary><p class="work">${escape(record.work)}</p>${feedbackBody(record.feedback)}</details>
         <p>${link(challengeUrl(challenge), 'Revisit and reassess for 0 credits')}</p></article>`;
     }).join('') : '<p>No saved evidence yet.</p>' + action('#/challenge/00-1', 'Try the first challenge')}
-    <p class="muted">This local preview supports repeat practice. Formal appeals and human review require an approved service and review owner.</p>`;
+    <p class="muted">You can revisit and reassess a practice decision. Formal appeals and human review require an approved service and review owner.</p>`;
 }
 
 function skillPage() {
@@ -186,8 +191,9 @@ function skillPage() {
 }
 
 function lab() {
-  return `<h1>Skills Lab</h1><p>Choose a scenario and practise with fixed formative feedback. AI mentoring is disabled in this local release.</p>
-    ${status}${modules.map(module => section(escape(module.title), list(module.challenges.map(challenge => link(challengeUrl(challenge), challenge.title))))).join('')}`;
+  return `<h1>Skills Lab</h1><p>Choose a business decision, write your response and compare your reasoning with the review criteria.</p>
+    ${status}<div class="lab-index">${modules.map(module => `<section class="lab-topic"><h2>${escape(module.title)}</h2>
+      ${list(module.challenges.map(challenge => link(challengeUrl(challenge), challenge.title)))}</section>`).join('')}</div>`;
 }
 
 function sources() {
@@ -200,7 +206,7 @@ function sources() {
 }
 
 function profile() {
-  return `<article><h1>Profile</h1><p>This preview uses browser storage for reading progress and practice evidence. It creates no account and sends no learning data to a service. Use fictional inputs only.</p>
+  return `<article><h1>Profile</h1><p>The academy uses browser storage for reading progress and practice evidence. It creates no account and sends no learning data to a service. Use fictional inputs only.</p>
   <div class="actions"><button id="export" type="button">Export local data</button><button id="clear" class="secondary" type="button">Delete local data</button></div>
   <dialog id="confirm" aria-labelledby="delete-title"><h2 id="delete-title">Delete local data?</h2>
     <p>This removes reading progress and evidence saved in this browser.</p><form method="dialog" class="actions">
