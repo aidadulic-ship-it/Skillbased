@@ -1,5 +1,15 @@
 # The Skills-Based Organization Academy
 
+## Read the learning content
+
+[Open the curriculum on GitHub](./curriculum/README.md) for all 11 modules,
+56 lessons and 33 practice challenges. Each module includes examples,
+limitations, knowledge checks, and suggested answers. The texts are marked
+as editorial drafts pending source verification.
+
+The reading pages are generated from the same curriculum used by the Academy.
+After changing curriculum content, run `npm run curriculum` to refresh them.
+
 ## Run locally
 
 Run `npm start` from this checkout with Node.js and Python 3 installed. Open

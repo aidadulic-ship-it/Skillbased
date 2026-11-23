@@ -1,1 +1,1 @@
-{"name":"skills-based-academy","private":true,"type":"module","scripts":{"test":"node --test","build":"node build.mjs","start":"python3 -m http.server 8000 --bind 127.0.0.1 --directory site","dev":"node preview.mjs"}}
+{"name":"skills-based-academy","private":true,"type":"module","scripts":{"test":"node --test","build":"node build.mjs","start":"python3 -m http.server 8000 --bind 127.0.0.1 --directory site","dev":"node preview.mjs","curriculum":"node scripts/export-curriculum.mjs"}}
