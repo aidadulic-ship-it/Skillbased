@@ -1,0 +1,7 @@
+---
+layout: null
+---
+{%- capture academy_entry -%}
+  {%- include_relative site/index.html -%}
+{%- endcapture -%}
+{{- academy_entry | replace: './style.css', './site/style.css' | replace: './app.js', './site/app.js' -}}
