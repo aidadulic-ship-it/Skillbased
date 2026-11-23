@@ -23,6 +23,26 @@ export function resolve(hash) {
   return { page: 'missing' };
 }
 
+export function restoreProgress(value) {
+  const read = Array.isArray(value?.read) ? value.read : [];
+  const evidence = Array.isArray(value?.evidence) ? value.evidence : [];
+  return {
+    read: [...new Set(read.filter(id => typeof id === 'string' && resolve('#/learn/' + id).page === 'lesson'))],
+    evidence: evidence.filter(record => {
+      const feedback = record?.feedback;
+      return typeof record?.challengeId === 'string'
+        && typeof record.at === 'string'
+        && Number.isFinite(Date.parse(record.at))
+        && typeof record.work === 'string'
+        && typeof feedback?.rubricVersion === 'string'
+        && typeof feedback.confidence === 'string'
+        && Array.isArray(feedback.criteria)
+        && feedback.criteria.length > 0
+        && feedback.criteria.every(item => typeof item?.label === 'string' && typeof item.feedback === 'string');
+    }),
+  };
+}
+
 export function evaluate(challenge, choices) {
   if (choices.length !== challenge.rubric.criteria.length || Array.from(choices).some(choice => choice !== 0 && choice !== 1)) {
     throw new TypeError('Choose an answer for every criterion.');

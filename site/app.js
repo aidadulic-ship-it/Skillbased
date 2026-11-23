@@ -1,5 +1,5 @@
 import { cases, domains, draft, modules, skills } from './content.js';
-import { challenges, evaluate, pages, recommend, resolve } from './learning.js';
+import { challenges, evaluate, pages, recommend, resolve, restoreProgress } from './learning.js';
 
 const key = 'sbo-academy-v1';
 const empty = () => ({ read: [], evidence: [] });
@@ -8,8 +8,7 @@ const nav = document.querySelector('nav');
 let storageMessage = '';
 let state = empty();
 try {
-  const value = JSON.parse(localStorage.getItem(key));
-  if (Array.isArray(value?.read) && Array.isArray(value?.evidence)) state = value;
+  state = restoreProgress(JSON.parse(localStorage.getItem(key)));
 } catch {
   storageMessage = 'Saved progress could not be loaded. This session can still be used.';
 }
@@ -63,7 +62,7 @@ function updateCatalog() {
   const domain = document.querySelector('#domain').value;
   const shown = modules.filter(item => (!domain || item.domain === domain)
     && [item.title, item.outcome, item.domain, ...item.lessons.map(lesson => lesson.title)].join(' ').toLowerCase().includes(search));
-  document.querySelector('#results').textContent = shown.length ? shown.length + ' modules' : 'No modules match your filters.';
+  document.querySelector('#results').textContent = shown.length ? shown.length + (shown.length === 1 ? ' module' : ' modules') : 'No modules match your filters.';
   document.querySelector('#catalog').innerHTML = shown.map(item => `<article class="card">
     <p class="eyebrow">Module ${item.id} · ${escape(item.domain)}</p>
     <h2>${link('#/learn/' + item.id, item.title)}</h2><p>${escape(item.outcome)}</p>

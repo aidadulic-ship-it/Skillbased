@@ -57,7 +57,7 @@ legend { font-weight: 700; }
 textarea { display: block; resize: vertical; }
 progress { width: min(100%, 25rem); accent-color: var(--magenta); }
 .record { overflow-wrap: anywhere; }
-.work { white-space: pre-wrap; }
+.work { white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 40rem) {
   .header { gap: .65rem; }
   nav { margin-inline: -.4rem; }

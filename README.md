@@ -47,11 +47,11 @@ merge its content and routes if an additional source repository is identified.
 | Verification | Result |
 | --- | --- |
 | `npm test` before implementation | Failed as expected because the content and learning modules did not exist yet |
-| `npm test` after implementation | Six tests passed, covering curriculum inventory, module/lesson/challenge routes, invalid routes, formative rubric results, recommendations and reassessment |
+| `npm test` after implementation | Seven tests passed, covering curriculum inventory, routes, formative feedback, recommendations, reassessment and recovery of valid records from partially corrupted browser storage |
 | `npm run build` | Passed |
 | `node --check` on each browser JavaScript module | Passed |
 | Local HTTP requests to all six built files | HTTP 200 and response bodies matched build output |
-| Managed browser preview | Browser relay timed out after the preview command started. Mobile, live keyboard flows, screen-reader behavior and screenshots remain unverified |
+| Managed browser preview | The earlier preview relay timed out. On the QA branch, local Chromium could not start because the environment denied its process socket. Mobile viewports, live keyboard flows, screen-reader behavior and screenshots still require a browser run |
 | Backend, authorization, appeals, concurrency and kill switch | Pending an approved backend and human review workflow |
 | Editorial verification and assessment calibration | Pending editorial and qualified assessor review |
 

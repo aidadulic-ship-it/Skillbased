@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { modules, skills, draft } from '../site/content.js';
-import { resolve, evaluate, recommend } from '../site/learning.js';
+import { resolve, evaluate, recommend, restoreProgress } from '../site/learning.js';
 
 test('curriculum has 11 modules, 10 skills and 33 unique authored challenges', () => {
   assert.equal(modules.length, 11);
@@ -66,4 +66,20 @@ test('saved feedback remains independent of subsequent reassessment', () => {
   assert.equal(saved.confidence, 'Well supported');
   assert.equal(reassessed.confidence, 'Insufficient');
   assert.equal(saved.rubricVersion, '1.0');
+});
+
+test('saved state retains older records and recovers from malformed entries', () => {
+  const challenge = modules[0].challenges[0];
+  const record = {
+    challengeId: challenge.id,
+    at: '2026-11-23T00:00:00.000Z',
+    work: 'A fictional response.',
+    feedback: evaluate(challenge, [0, 1, 1]),
+  };
+  const previous = {
+    read: ['00/1', '00/1', 'missing/1', null],
+    evidence: [null, { ...record, feedback: {} }, record],
+  };
+  assert.deepEqual(restoreProgress(previous), { read: ['00/1'], evidence: [record] });
+  assert.deepEqual(restoreProgress({ evidence: [record] }), { read: [], evidence: [record] });
 });
