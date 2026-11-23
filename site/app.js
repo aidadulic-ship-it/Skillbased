@@ -1,3 +1,4 @@
+import { language, setLanguage, t, translateView } from './i18n.js';
 import { cases, domains, draft, modules, skills } from './content.js';
 import { challenges, evaluate, pages, recommend, resolve, restoreProgress } from './learning.js';
 
@@ -5,6 +6,7 @@ const key = 'sbo-academy-v1';
 const empty = () => restoreProgress(null);
 const main = document.querySelector('main');
 const nav = document.querySelector('nav');
+const switcher = document.querySelector('#language');
 let storageMessage = '';
 let state = empty();
 try {
@@ -55,21 +57,21 @@ function dashboard() {
   </section>
   <section class="learning-desk" aria-label="Your learning">
     <div class="desk-cell"><p class="eyebrow">Up next</p><h2>${link(next.url, next.title)}</h2><p>${escape(next.reason)}</p></div>
-    <div class="desk-cell"><p class="eyebrow">Reading progress</p><p id="progress-label"><strong>${state.read.length}</strong> / ${lessonCount} lessons complete</p>
+    <div class="desk-cell"><p class="eyebrow">Reading progress</p><p id="progress-label"><strong>${state.read.length}</strong> / ${lessonCount} ${t('lessons complete')}</p>
       <progress aria-labelledby="progress-label" value="${state.read.length}" max="${lessonCount}"></progress></div>
-    <div class="desk-cell"><p class="eyebrow">Decision portfolio</p><p><strong>${state.evidence.length}</strong> saved practice record${state.evidence.length === 1 ? '' : 's'}</p>${link('#/portfolio', 'Open portfolio')}</div>
+    <div class="desk-cell"><p class="eyebrow">Decision portfolio</p><p><strong>${state.evidence.length}</strong> ${t(state.evidence.length === 1 ? 'saved practice record' : 'saved practice records')}</p>${link('#/portfolio', 'Open portfolio')}</div>
   </section>
   <section class="featured-case" aria-labelledby="featured-title">
     <div class="featured-copy"><p class="eyebrow">From the Skills Lab</p><h2 id="featured-title">Your night shift is losing time. What would you investigate first?</h2>
     <p>Leadership wants a skills taxonomy. You have to find out whether the bottleneck is skill coverage, spare parts or something else.</p>${action(challengeUrl(featured), 'Open the case')}</div>
-    <dl class="case-briefing"><div><dt>Organization</dt><dd>NOVA Manufacturing</dd></div><div><dt>Setting</dt><dd>Fictional, two sites</dd></div><div><dt>Assignment</dt><dd>Diagnosis and a bounded next step</dd></div><div><dt>Time</dt><dd>${featured.minutes} minutes</dd></div></dl>
+    <dl class="case-briefing"><div><dt>Organization</dt><dd>NOVA Manufacturing</dd></div><div><dt>Setting</dt><dd>Fictional, two sites</dd></div><div><dt>Assignment</dt><dd>Diagnosis and a bounded next step</dd></div><div><dt>Time</dt><dd>${featured.minutes} ${t('minutes')}</dd></div></dl>
   </section>
   <section class="dashboard-section" aria-labelledby="explore">
     <h2 id="explore">The programme at a glance</h2>
     <div class="grid pathways">
-      <article class="pathway"><h3>${link('#/learn', 'Study the programme')}</h3><p>${modules.length} modules · ${lessonCount} lessons</p></article>
-      <article class="pathway"><h3>${link('#/skills', 'Explore the skills')}</h3><p>${skills.length} skills · ${domains.length} domains</p></article>
-      <article class="pathway"><h3>${link('#/lab', 'Enter the Skills Lab')}</h3><p>${challenges.length} practice challenges</p></article>
+      <article class="pathway"><h3>${link('#/learn', 'Study the programme')}</h3><p>${modules.length} ${t('modules')} · ${lessonCount} ${t('lessons')}</p></article>
+      <article class="pathway"><h3>${link('#/skills', 'Explore the skills')}</h3><p>${skills.length} ${t('skills')} · ${domains.length} ${t('domains')}</p></article>
+      <article class="pathway"><h3>${link('#/lab', 'Enter the Skills Lab')}</h3><p>${challenges.length} ${t('practice challenges')}</p></article>
     </div>
   </section>`;
 }
@@ -77,7 +79,7 @@ function dashboard() {
 function catalog() {
   return `<div class="page-heading"><p class="eyebrow">Executive Masterclass</p><h1>The programme</h1><p class="intro">Start with foundations or find the module that fits the decision you are working on.</p>${status}</div>
     <div class="filters"><label class="control">Search modules<input id="search" type="search"></label>
-    <label class="control">Domain<select id="domain"><option value="">All domains</option>${['Foundations', ...domains].map(domain => '<option>' + escape(domain) + '</option>').join('')}</select></label></div>
+    <label class="control">Domain<select id="domain"><option value="">All domains</option>${['Foundations', ...domains].map(domain => '<option value="' + escape(domain) + '">' + escape(domain) + '</option>').join('')}</select></label></div>
     <p role="status" id="results"></p><div class="catalog-grid" id="catalog"></div>`;
 }
 
@@ -85,16 +87,17 @@ function updateCatalog() {
   const search = document.querySelector('#search').value.trim().toLowerCase();
   const domain = document.querySelector('#domain').value;
   const shown = modules.filter(item => (!domain || item.domain === domain)
-    && [item.title, item.outcome, item.domain, ...item.lessons.map(lesson => lesson.title)].join(' ').toLowerCase().includes(search));
-  document.querySelector('#results').textContent = shown.length ? shown.length + (shown.length === 1 ? ' module' : ' modules') : 'No modules match your filters.';
+    && [item.title, item.outcome, item.domain, ...item.lessons.map(lesson => lesson.title)].flatMap(text => [text, t(text)]).join(' ').toLowerCase().includes(search));
+  document.querySelector('#results').textContent = shown.length ? shown.length + ' ' + t(shown.length === 1 ? 'module' : 'modules') : t('No modules match your filters.');
   document.querySelector('#catalog').innerHTML = shown.map(item => {
     const completed = item.lessons.filter(lesson => state.read.includes(item.id + '/' + lesson.id)).length;
     return `<article class="module-card">
       <p class="eyebrow">${escape(item.domain)}</p>
       <div><h2>${link('#/learn/' + item.id, item.title)}</h2><p>${escape(item.outcome)}</p></div>
-      <div class="module-meta"><p class="meta">${item.lessons.length} lessons · ${item.challenges.length} challenges · ${item.minutes} min</p>
-      ${completed ? `<p class="completion">${completed}/${item.lessons.length} lessons complete</p>` : ''}</div></article>`;
+      <div class="module-meta"><p class="meta">${item.lessons.length} ${t('lessons')} · ${item.challenges.length} ${t('practice challenges')} · ${item.minutes} ${t('min')}</p>
+      ${completed ? `<p class="completion">${completed}/${item.lessons.length} ${t('lessons complete')}</p>` : ''}</div></article>`;
   }).join('');
+  translateView(document.querySelector('#catalog'));
 }
 
 function modulePage(module) {
@@ -102,13 +105,13 @@ function modulePage(module) {
   return `<article class="reading-page">
     <header class="page-heading">${link('#/learn', 'All modules')}<p class="eyebrow">${escape(module.domain)}</p>
     <h1>${escape(module.title)}</h1><p class="intro">${escape(module.outcome)}</p>${status}
-    <p class="meta">${completed}/${module.lessons.length} lessons complete · ${module.minutes} min total</p>
+    <p class="meta">${completed}/${module.lessons.length} ${t('lessons complete')} · ${module.minutes} ${t('min total')}</p>
     ${module.id !== '00' ? '<p>Suggested preparation ' + link('#/learn/00', 'SBO Foundations') + '</p>' : ''}</header>
     <h2>Lessons</h2><ol class="learning-list">
-    ${module.lessons.map(lesson => `<li>${link(lessonUrl(module, lesson), lesson.title)}<span class="meta">5 min</span>
+    ${module.lessons.map(lesson => `<li>${link(lessonUrl(module, lesson), lesson.title)}<span class="meta">5 ${t('min')}</span>
       ${state.read.includes(module.id + '/' + lesson.id) ? '<span class="completion">Complete</span>' : ''}</li>`).join('')}</ol>
     <h2>Challenges</h2><ul class="learning-list">
-    ${module.challenges.map(challenge => `<li>${link(challengeUrl(challenge), challenge.title)}<span class="meta">12 min</span></li>`).join('')}</ul>
+    ${module.challenges.map(challenge => `<li>${link(challengeUrl(challenge), challenge.title)}<span class="meta">12 ${t('min')}</span></li>`).join('')}</ul>
   </article>`;
 }
 
@@ -116,15 +119,15 @@ function lessonSources(notes) {
   if (!notes.length) return '';
   return section('Evidence and interpretation', '<ul class="source-list">' + notes.map(note => `<li>
     <p>${escape(note.claim)}</p><p>${escape(note.limitation)}</p>
-    <p>${link(escape(note.url), note.title)} · ${escape(note.publisher)} · ${escape(note.location)}</p>
-    <p class="meta">${escape(note.evidenceType)} · ${escape(note.reviewStatus)} ${escape(note.reviewedAt)}${note.publicationDate ? ' · Published ' + escape(note.publicationDate) : ''}</p></li>`).join('') + '</ul>');
+    <p><span data-no-translate>${link(escape(note.url), note.title)} · ${escape(note.publisher)}</span> · ${escape(t(note.location))}</p>
+    <p class="meta">${escape(t(note.evidenceType))} · ${escape(t(note.reviewStatus))} ${escape(note.reviewedAt)}${note.publicationDate ? ' · ' + t('Published') + ' ' + escape(note.publicationDate) : ''}</p></li>`).join('') + '</ul>');
 }
 
 function lessonPage(module, lesson) {
   const next = module.lessons[Number(lesson.id)];
   const done = state.read.includes(module.id + '/' + lesson.id);
   const outline = module.lessons.map(item => `<li><a href="${lessonUrl(module, item)}"${item === lesson ? ' aria-current="page"' : ''}>${escape(item.title)}</a></li>`).join('');
-  return `<div class="reading-layout"><article class="reading-page"><header class="page-heading">${link('#/learn/' + module.id, module.title)}<p class="eyebrow">Lesson ${lesson.id} · 5 min</p>
+  return `<div class="reading-layout"><article class="reading-page"><header class="page-heading">${link('#/learn/' + module.id, module.title)}<p class="eyebrow">${t('Lesson')} ${lesson.id} · 5 ${t('min')}</p>
     <h1>${escape(lesson.title)}</h1>${status}</header><p class="lesson-lead">${escape(lesson.body)}</p>
     <section class="lesson-example"><h2>Example</h2><p>${escape(lesson.example)}</p></section>
     ${section('Limitation', '<p>' + escape(lesson.limit) + '</p>')}
@@ -167,7 +170,7 @@ function challengePage(challenge) {
 function feedbackBody(feedback) {
   return `<p><strong>Learning evidence confidence</strong> ${escape(feedback.confidence)}</p>
     ${list(feedback.criteria.map(item => '<strong>' + escape(item.label) + '</strong> ' + escape(item.feedback)))}
-    <p class="muted">Rubric v${escape(feedback.rubricVersion)} · The result covers this practice exercise. Workplace competence and certification require separate assessment.</p>`;
+    <p class="muted">${t('Rubric v')}${escape(feedback.rubricVersion)} · ${t('The result covers this practice exercise. Workplace competence and certification require separate assessment.')}</p>`;
 }
 
 function portfolio() {
@@ -176,7 +179,7 @@ function portfolio() {
       const challenge = challenges.find(item => item.id === record.challengeId);
       if (!challenge) return '';
       return `<article class="card record"><h2>${link(challengeUrl(challenge), challenge.title)}</h2>
-        <p class="meta">${escape(new Date(record.at).toLocaleDateString())} · ${escape(record.feedback.confidence)}</p>
+        <p class="meta">${escape(new Date(record.at).toLocaleDateString(language === 'de' ? 'de-AT' : 'en-GB'))} · ${escape(record.feedback.confidence)}</p>
         <details><summary>View response and feedback</summary><p class="work">${escape(record.work)}</p>${feedbackBody(record.feedback)}</details>
         <p>${link(challengeUrl(challenge), 'Revisit and reassess for 0 credits')}</p></article>`;
     }).join('') : '<p>No saved evidence yet.</p>' + action('#/challenge/00-1', 'Try the first challenge')}
@@ -225,13 +228,13 @@ function bindPractice(challenge) {
       const work = form.elements.work.value;
       if (state.drafts[challenge.id] !== work) {
         state.drafts[challenge.id] = work;
-        if (!persist()) notice.textContent = storageMessage;
+        if (!persist()) notice.textContent = t(storageMessage);
       }
     }
     if (pending) {
       pending = undefined;
       output.innerHTML = '';
-      notice.textContent = 'Response changed. Request feedback again before saving.';
+      notice.textContent = t('Response changed. Request feedback again before saving.');
     }
   };
   form.onsubmit = event => {
@@ -239,7 +242,7 @@ function bindPractice(challenge) {
     const data = new FormData(form);
     const work = String(data.get('work')).trim();
     if (!work) {
-      notice.textContent = 'Enter a response before requesting feedback.';
+      notice.textContent = t('Enter a response before requesting feedback.');
       form.elements.work.focus();
       return;
     }
@@ -252,6 +255,7 @@ function bindPractice(challenge) {
     };
     output.innerHTML = '<h2>Formative feedback</h2>' + feedbackBody(pending.feedback) +
       '<div class="actions"><button id="save" type="button">Save evidence</button>' + link('#/portfolio', 'View portfolio') + '</div>';
+    translateView(output);
     notice.textContent = '';
     output.focus();
     document.querySelector('#save').onclick = () => {
@@ -259,7 +263,7 @@ function bindPractice(challenge) {
       state.evidence.unshift(pending);
       delete state.drafts[challenge.id];
       pending = undefined;
-      notice.textContent = persist() ? 'Evidence saved to your portfolio.' : storageMessage;
+      notice.textContent = persist() ? t('Evidence saved to your portfolio.') : t(storageMessage);
       document.querySelector('#save').disabled = true;
       output.focus();
     };
@@ -286,9 +290,9 @@ function bindProfile() {
     try {
       localStorage.removeItem(key);
       state = empty();
-      notice.textContent = 'Local learning data deleted.';
+      notice.textContent = t('Local learning data deleted.');
     } catch {
-      notice.textContent = 'Could not delete browser storage. Clear this site’s data in your browser settings.';
+      notice.textContent = t('Could not delete browser storage. Clear this site’s data in your browser settings.');
     }
   };
 }
@@ -298,7 +302,12 @@ function render(moveFocus = false) {
   const {page, module, lesson, challenge} = route;
   const current = ({ module: 'learn', lesson: 'learn', challenge: 'lab' })[page] ?? page;
   nav.innerHTML = Object.entries(pages).map(([id, label]) =>
-    `<a href="#/${id}"${current === id ? ' aria-current="page"' : ''}>${label}</a>`).join('');
+    `<a href="#/${id}"${current === id ? ' aria-current="page"' : ''}>${escape(t(label))}</a>`).join('');
+  document.documentElement.lang = language;
+  switcher.value = language;
+  document.querySelector('label[for="language"]').textContent = t('Language');
+  document.querySelector('.skip').textContent = t('Skip to content');
+  nav.setAttribute('aria-label', t('Main navigation'));
   const views = {
     dashboard, learn: catalog, skills: skillPage, lab, sources, portfolio, profile,
     module: () => modulePage(module), lesson: () => lessonPage(module, lesson),
@@ -306,7 +315,8 @@ function render(moveFocus = false) {
     missing: () => '<h1>Page unavailable</h1><p>Choose an available module from the catalog.</p>' + action('#/learn', 'View modules'),
   };
   main.innerHTML = (storageMessage ? '<p role="status">' + escape(storageMessage) + '</p>' : '') + views[page]();
-  document.title = (lesson?.title ?? challenge?.title ?? module?.title ?? pages[page] ?? 'Page unavailable') + ' · Skills-Based Organization Academy';
+  translateView(main);
+  document.title = t(lesson?.title ?? challenge?.title ?? module?.title ?? pages[page] ?? 'Page unavailable') + ' · Skills-Based Organization Academy';
   if (page === 'learn') {
     document.querySelector('#search').oninput = updateCatalog;
     document.querySelector('#domain').onchange = updateCatalog;
@@ -318,9 +328,9 @@ function render(moveFocus = false) {
     button.onclick = () => {
       const complete = !state.read.includes(id);
       state.read = complete ? [...state.read, id] : state.read.filter(item => item !== id);
-      button.textContent = complete ? 'Lesson complete' : 'Mark lesson complete';
+      button.textContent = t(complete ? 'Lesson complete' : 'Mark lesson complete');
       button.setAttribute('aria-pressed', complete);
-      document.querySelector('#notice').textContent = persist() ? 'Reading progress updated.' : storageMessage;
+      document.querySelector('#notice').textContent = persist() ? t('Reading progress updated.') : t(storageMessage);
     };
   }
   if (page === 'challenge') bindPractice(challenge);
@@ -337,6 +347,23 @@ document.querySelector('.skip').addEventListener('click', event => {
   event.preventDefault();
   main.focus();
   main.scrollIntoView();
+});
+switcher.addEventListener('change', () => {
+  const search = document.querySelector('#search')?.value;
+  const domain = document.querySelector('#domain')?.value;
+  const checked = [...main.querySelectorAll('input[type="radio"]:checked')].map(input => [input.name, input.value]);
+  const scroll = window.scrollY;
+  setLanguage(switcher.value);
+  render();
+  if (search !== undefined) {
+    document.querySelector('#search').value = search;
+    document.querySelector('#domain').value = domain;
+    updateCatalog();
+  }
+  for (const [name, value] of checked) {
+    main.querySelector(`input[name="${name}"][value="${value}"]`).checked = true;
+  }
+  window.scrollTo(0, scroll);
 });
 window.addEventListener('hashchange', () => render(true));
 render();

@@ -98,3 +98,23 @@ test('foundations source notes identify evidence, limits and review status', () 
     assert.equal(lesson.status, draft);
   }
 });
+
+test('German catalogue covers the complete curriculum and formative feedback', async () => {
+  const { germanContent } = await import('../site/de-content.js');
+  const { curriculum } = await import('../site/curriculum.js');
+  const { cases, domains } = await import('../site/content.js');
+  const check = text => assert.ok(Object.hasOwn(germanContent, text) && germanContent[text].trim(), text);
+  curriculum.flat(Infinity).forEach(check);
+  Object.values(cases).forEach(check);
+  domains.forEach(check);
+  for (const module of modules) {
+    for (const challenge of module.challenges) {
+      for (const criterion of challenge.rubric.criteria) {
+        [criterion.label, criterion.question, ...criterion.options, criterion.strong, criterion.revise].forEach(check);
+      }
+    }
+    for (const lesson of module.lessons) {
+      for (const source of lesson.sourceClaims) [source.claim, source.limitation, source.location, source.evidenceType].forEach(check);
+    }
+  }
+});
